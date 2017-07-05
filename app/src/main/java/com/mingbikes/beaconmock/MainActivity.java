@@ -113,6 +113,10 @@ public class MainActivity extends AppCompatActivity {
             mBeaconManager.stopAdvertising();
             mBeaconManager = null;
         }
+
+        if(tv_status != null) {
+            tv_status.setText("停止广播");
+        }
     }
 
     @Override
