@@ -18,12 +18,12 @@ import com.mingbikes.beaconmock.bluetooth.MockServerCallBack;
 
 public class MainActivity extends AppCompatActivity {
 
-    private BeaconManager mBeaconManager;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        BeaconManager.getInstance().setContext(this);
 
         initViews();
     }
@@ -96,23 +96,17 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        if(mBeaconManager == null) {
-            mBeaconManager = new BeaconManager(this);
-            mBeaconManager.init(999);
-        }
+        BeaconManager.getInstance().init(this, 999);
 
-        mBeaconManager.setMajor(Integer.valueOf(et_major.getText().toString()));
-        mBeaconManager.setMinor(Integer.valueOf(et_minor.getText().toString()));
-        mBeaconManager.setTxPower(Integer.valueOf(et_tx_power.getText().toString()));
+        BeaconManager.getInstance().setMajor(Integer.valueOf(et_major.getText().toString()));
+        BeaconManager.getInstance().setMinor(Integer.valueOf(et_minor.getText().toString()));
+        BeaconManager.getInstance().setTxPower(Integer.valueOf(et_tx_power.getText().toString()));
 
-        mBeaconManager.startAdvertising(new BleServerCallBack());
+        BeaconManager.getInstance().startAdvertising(new BleServerCallBack());
     }
 
     public void onStopClick(View view) {
-        if (mBeaconManager != null) {
-            mBeaconManager.stopAdvertising();
-            mBeaconManager = null;
-        }
+        BeaconManager.getInstance().stopAdvertising();
 
         if(tv_status != null) {
             tv_status.setText("停止广播");
@@ -121,9 +115,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        if (mBeaconManager != null) {
-            mBeaconManager.stopAdvertising();
-        }
+        BeaconManager.getInstance().stopAdvertising();
         super.onDestroy();
     }
 

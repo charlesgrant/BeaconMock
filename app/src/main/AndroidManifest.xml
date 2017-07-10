@@ -24,6 +24,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <receiver android:name=".BluetoothReceiver" >
+            <intent-filter android:priority="1000">
+                <action android:name="com.mingbikes.beacon.mock.start"/>
+                <action android:name="com.mingbikes.beacon.mock.stop" />
+            </intent-filter>
+        </receiver>
+
     </application>
 
 </manifest>

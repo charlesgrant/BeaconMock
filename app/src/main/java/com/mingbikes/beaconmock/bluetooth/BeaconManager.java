@@ -7,6 +7,7 @@ import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.AdvertiseCallback;
 import android.bluetooth.le.AdvertiseSettings;
 import android.bluetooth.le.BluetoothLeAdvertiser;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.util.Log;
@@ -35,16 +36,31 @@ public class BeaconManager {
     private BluetoothManager mBluetoothManager;
     private BluetoothAdapter mBluetoothAdapter;
     private BluetoothLeAdvertiser mBluetoothAdvertiser;
-    private Activity mActivity;
+    private Context mContext;
     private MockServerCallBack mMockServerCallBack;
     private BluetoothGattServer mGattServer;
 
-    public BeaconManager(Activity activity) {
-        mActivity = activity;
+    private static class SingletonHolder {
+        static final BeaconManager instance = new BeaconManager();
+    }
+
+    /**
+     * Return the Acquisition singleton.
+     */
+    public synchronized static BeaconManager getInstance() {
+        return SingletonHolder.instance;
+    }
+
+    public BeaconManager() {
+
+    }
+
+    public void setContext(Context context) {
+        mContext = context;
 
         //初始化BluetoothManager和BluetoothAdapter
         if (mBluetoothManager == null) {
-            mBluetoothManager = (BluetoothManager) mActivity.getSystemService(BLUETOOTH_SERVICE);
+            mBluetoothManager = (BluetoothManager) mContext.getSystemService(BLUETOOTH_SERVICE);
         }
 
         if (mBluetoothManager != null && mBluetoothAdapter == null) {
@@ -52,35 +68,35 @@ public class BeaconManager {
         }
     }
 
-    public void init(int requestCode) {
+    public void init(Activity activity, int requestCode) {
 
-        if (!mActivity.getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
-            Toast.makeText(mActivity, "不支持ble", Toast.LENGTH_LONG).show();
-            mActivity.finish();
+        if (!activity.getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
+            Toast.makeText(activity, "不支持ble", Toast.LENGTH_LONG).show();
+            activity.finish();
             return;
         }
 
-        final BluetoothManager mBluetoothManager = (BluetoothManager) mActivity.getSystemService(BLUETOOTH_SERVICE);
+        final BluetoothManager mBluetoothManager = (BluetoothManager) activity.getSystemService(BLUETOOTH_SERVICE);
         mBluetoothAdapter = mBluetoothManager.getAdapter();
 
         if (mBluetoothAdapter == null) {
-            Toast.makeText(mActivity, "不支持ble", Toast.LENGTH_LONG).show();
-            mActivity.finish();
+            Toast.makeText(activity, "不支持ble", Toast.LENGTH_LONG).show();
+            activity.finish();
             return;
         }
 
         mBluetoothAdvertiser = mBluetoothAdapter.getBluetoothLeAdvertiser();
         if (mBluetoothAdvertiser == null) {
-            Toast.makeText(mActivity, "the device not support peripheral", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, "the device not support peripheral", Toast.LENGTH_SHORT).show();
             Log.e(TAG, "the device not support peripheral");
-            mActivity.finish();
+            activity.finish();
             return;
         }
 
         //打开蓝牙的套路
         if ((mBluetoothAdapter == null) || (!mBluetoothAdapter.isEnabled())) {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            mActivity.startActivityForResult(enableBtIntent, requestCode);
+            activity.startActivityForResult(enableBtIntent, requestCode);
         }
     }
 
@@ -108,7 +124,7 @@ public class BeaconManager {
         if (mBluetoothAdvertiser != null) {
             mMockServerCallBack = callBack;
             //打开BluetoothGattServer
-            mGattServer = mBluetoothManager.openGattServer(mActivity, mMockServerCallBack);
+            mGattServer = mBluetoothManager.openGattServer(mContext, mMockServerCallBack);
             if (mGattServer == null) {
                 Log.d(TAG, "gatt is null");
             }
@@ -117,7 +133,8 @@ public class BeaconManager {
                 //创建BLE beacon Advertising并且广播
                 mBluetoothAdvertiser.startAdvertising(createAdvSettings(true, 0)
                         , BleUtil.createIBeaconAdvertiseData(BluetoothUUID.bleServerUUID,
-                                mMajor, mMinor, (byte) 0x5b), mAdvCallback);
+                                mMajor, mMinor, (byte) -0x3b)
+                        , BleUtil.createScanAdvertiseData(mMajor, mMinor, (byte) -0x3b), mAdvCallback);
             } catch (Exception e) {
                 Log.v(TAG, "Fail to setup BleService");
             }
@@ -154,22 +171,22 @@ public class BeaconManager {
             Log.d(TAG, "onStartFailure errorCode=" + errorCode);
 
             if (errorCode == ADVERTISE_FAILED_DATA_TOO_LARGE) {
-                Toast.makeText(mActivity, "advertise_failed_data_too_large", Toast.LENGTH_LONG).show();
+                Toast.makeText(mContext, "advertise_failed_data_too_large", Toast.LENGTH_LONG).show();
                 Log.e(TAG, "Failed to start advertising as the advertise data to be broadcasted is larger than 31 bytes.");
             } else if (errorCode == ADVERTISE_FAILED_TOO_MANY_ADVERTISERS) {
-                Toast.makeText(mActivity, "advertise_failed_too_many_advertises", Toast.LENGTH_LONG).show();
+                Toast.makeText(mContext, "advertise_failed_too_many_advertises", Toast.LENGTH_LONG).show();
                 Log.e(TAG, "Failed to start advertising because no advertising instance is available.");
 
             } else if (errorCode == ADVERTISE_FAILED_ALREADY_STARTED) {
-                Toast.makeText(mActivity, "advertise_failed_already_started", Toast.LENGTH_LONG).show();
+                Toast.makeText(mContext, "advertise_failed_already_started", Toast.LENGTH_LONG).show();
                 Log.e(TAG, "Failed to start advertising as the advertising is already started");
 
             } else if (errorCode == ADVERTISE_FAILED_INTERNAL_ERROR) {
-                Toast.makeText(mActivity, "advertise_failed_internal_error", Toast.LENGTH_LONG).show();
+                Toast.makeText(mContext, "advertise_failed_internal_error", Toast.LENGTH_LONG).show();
                 Log.e(TAG, "Operation failed due to an internal error");
 
             } else if (errorCode == ADVERTISE_FAILED_FEATURE_UNSUPPORTED) {
-                Toast.makeText(mActivity, "advertise_failed_feature_unsupported", Toast.LENGTH_LONG).show();
+                Toast.makeText(mContext, "advertise_failed_feature_unsupported", Toast.LENGTH_LONG).show();
                 Log.e(TAG, "This feature is not supported on this platform");
 
             }

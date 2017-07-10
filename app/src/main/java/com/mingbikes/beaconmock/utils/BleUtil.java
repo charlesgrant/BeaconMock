@@ -1,7 +1,7 @@
 package com.mingbikes.beaconmock.utils;
 
 import android.bluetooth.le.AdvertiseData;
-
+import android.os.ParcelUuid;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.UUID;
@@ -10,6 +10,28 @@ import java.util.UUID;
  * ble util
  */
 public class BleUtil {
+
+    //设置一下scan广播数据
+    public static AdvertiseData createScanAdvertiseData(short major, short minor, byte txPower) {
+        AdvertiseData.Builder builder = new AdvertiseData.Builder();
+        builder.setIncludeDeviceName(true);
+
+        byte[] serverData = new byte[5];
+        ByteBuffer bb = ByteBuffer.wrap(serverData);
+        bb.order(ByteOrder.BIG_ENDIAN);
+//        bb.put((byte) 0x02);
+//        bb.put((byte) 0x15);
+        bb.putShort(major);
+        bb.putShort(minor);
+        bb.put(txPower);
+
+        builder.addServiceData(ParcelUuid.fromString(BluetoothUUID.bleServerUUID.toString())
+                , serverData);
+
+//        builder.setIncludeTxPowerLevel(true);
+        AdvertiseData adv = builder.build();
+        return adv;
+    }
 
     /**
      * create AdvertiseDate for iBeacon
@@ -41,7 +63,7 @@ public class BleUtil {
         }
         byte[] majorBytes = {(byte) (major >> 8), (byte) (major & 0xff)};
         byte[] minorBytes = {(byte) (minor >> 8), (byte) (minor & 0xff)};
-        byte[] mPowerBytes = {-0x59};
+        byte[] mPowerBytes = {txPower};
         byte[] manufacturerData = new byte[0x17];
         byte[] flagibeacon = {0x02, 0x15};
 

@@ -33,6 +33,7 @@
             android:layout_height="wrap_content"
             android:layout_marginLeft="10dp"
             android:inputType="number"
+            android:text="10001"
             android:textSize="16dp" />
 
     </LinearLayout>
@@ -54,6 +55,7 @@
             android:layout_height="wrap_content"
             android:layout_marginLeft="10dp"
             android:inputType="number"
+            android:text="12345"
             android:textSize="16dp" />
 
     </LinearLayout>
@@ -75,9 +77,15 @@
             android:layout_height="wrap_content"
             android:layout_marginLeft="10dp"
             android:inputType="number"
+            android:text="59"
             android:textSize="16dp" />
 
     </LinearLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="这个数值用于校准iBeacon和手机的距离,通常为55和59"/>
 
     <Button
         android:layout_width="wrap_content"
