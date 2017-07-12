@@ -2,7 +2,6 @@ package com.mingbikes.beaconmock.bluetooth;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothGattServer;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.AdvertiseCallback;
 import android.bluetooth.le.AdvertiseSettings;
@@ -37,8 +36,6 @@ public class BeaconManager {
     private BluetoothAdapter mBluetoothAdapter;
     private BluetoothLeAdvertiser mBluetoothAdvertiser;
     private Context mContext;
-    private MockServerCallBack mMockServerCallBack;
-    private BluetoothGattServer mGattServer;
 
     private static class SingletonHolder {
         static final BeaconManager instance = new BeaconManager();
@@ -116,20 +113,13 @@ public class BeaconManager {
         mTxPower = txPower;
     }
 
-    public void startAdvertising(MockServerCallBack callBack) {
+    public void startAdvertising() {
         //获取BluetoothLeAdvertiser，BLE发送BLE广播用的一个API
         if (mBluetoothAdvertiser == null) {
             mBluetoothAdvertiser = mBluetoothAdapter.getBluetoothLeAdvertiser();
         }
         if (mBluetoothAdvertiser != null) {
-            mMockServerCallBack = callBack;
-            //打开BluetoothGattServer
-            mGattServer = mBluetoothManager.openGattServer(mContext, mMockServerCallBack);
-            if (mGattServer == null) {
-                Log.d(TAG, "gatt is null");
-            }
             try {
-                mMockServerCallBack.setupServices(mGattServer);
                 //创建BLE beacon Advertising并且广播
                 mBluetoothAdvertiser.startAdvertising(createAdvSettings(true, 0)
                         , BleUtil.createIBeaconAdvertiseData(BluetoothUUID.bleServerUUID,
@@ -141,7 +131,7 @@ public class BeaconManager {
         }
     }
 
-    public static AdvertiseSettings createAdvSettings(boolean connectable, int timeoutMillis) {
+    public AdvertiseSettings createAdvSettings(boolean connectable, int timeoutMillis) {
         AdvertiseSettings.Builder builder = new AdvertiseSettings.Builder();
         //设置广播的模式,应该是跟功耗相关
         builder.setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_BALANCED);
@@ -159,6 +149,7 @@ public class BeaconManager {
     private AdvertiseCallback mAdvCallback = new AdvertiseCallback() {
         public void onStartSuccess(android.bluetooth.le.AdvertiseSettings settingsInEffect) {
             super.onStartSuccess(settingsInEffect);
+            Toast.makeText(mContext, "Advertise Start Success", Toast.LENGTH_SHORT).show();
             if (settingsInEffect != null) {
                 Log.d(TAG, "onStartSuccess TxPowerLv=" + settingsInEffect.getTxPowerLevel() + " mode=" + settingsInEffect.getMode() + " timeout=" + settingsInEffect.getTimeout());
             } else {
@@ -201,10 +192,6 @@ public class BeaconManager {
         }
         if (mBluetoothAdapter != null) {
             mBluetoothAdapter = null;
-        }
-        if (mGattServer != null) {
-            mGattServer.clearServices();
-            mGattServer.close();
         }
     }
 }
